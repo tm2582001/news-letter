@@ -1,7 +1,7 @@
 use news_letter::configuration::get_configuration;
 use news_letter::startup::run;
 use std::net::TcpListener;
-use sqlx::{Connection, PgPool};
+use sqlx::PgPool;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
