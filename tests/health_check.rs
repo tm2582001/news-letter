@@ -4,10 +4,13 @@
 // you can inspect what code gets generate using
 // `cargo expand --test health_check` (<-name of test file)
 
-use news_letter::configuration::{get_configuration, DatabaseSettings};
-use sqlx::{Connection, PgConnection, Executor, PgPool};
+use news_letter::{
+    configuration::{get_configuration, DatabaseSettings},
+    telemetry::{get_subscriber, init_subscriber},
+};
+use sqlx::{Connection, Executor, PgConnection, PgPool};
+use std::{net::TcpListener, sync::LazyLock};
 use uuid::Uuid;
-use std::net::TcpListener;
 
 use news_letter::startup::run;
 
@@ -15,6 +18,12 @@ pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
 }
+
+// book uses Lazy from once_lock here but it is giving error now so we Can use lazy_static here I think else LazyLock which is build in 
+static TRACING: LazyLock<()> = LazyLock::new(|| {
+    let subscriber = get_subscriber("test".into(), "debug".into());
+    init_subscriber(subscriber);
+});
 
 #[tokio::test]
 async fn dummy_test() {
@@ -33,35 +42,33 @@ async fn dummy_test() {
     assert_eq!(Some(0), response.content_length());
 }
 
-pub async fn configure_database(config: &DatabaseSettings)->PgPool{
-
+pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
-    let mut connection = PgConnection::connect(
-        &config.connection_string_without_db()
-    ).await
-    .expect("Failed to connect to postgres");
+    let mut connection = PgConnection::connect(&config.connection_string_without_db())
+        .await
+        .expect("Failed to connect to postgres");
 
-    connection.execute(
-        format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str()
-    ).await.expect(
-        "Failed to create database."
-    );
+    connection
+        .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
+        .await
+        .expect("Failed to create database.");
 
     // Migrate database
-    let connection_pool =  PgPool::connect(&config.connection_string())
+    let connection_pool = PgPool::connect(&config.connection_string())
         .await
         .expect("Failed to connect to Postgres.");
 
     sqlx::migrate!("./migrations")
-    .run(&connection_pool)
-    .await
-    .expect("Failed to migrate the database");
-
+        .run(&connection_pool)
+        .await
+        .expect("Failed to migrate the database");
 
     connection_pool
 }
 
 async fn spawn_app() -> TestApp {
+    LazyLock::force(&TRACING);
+
     let listener = TcpListener::bind("127.0.0.1:0").expect("Failed to bind random port");
 
     let port = listener.local_addr().unwrap().port();

@@ -1,10 +1,16 @@
 use news_letter::configuration::get_configuration;
 use news_letter::startup::run;
-use std::net::TcpListener;
+use news_letter::telemetry::{get_subscriber, init_subscriber};
 use sqlx::PgPool;
+use std::net::TcpListener;
+
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+
+    let subscriber = get_subscriber("news-letter".into(), "info".into());
+    init_subscriber(subscriber);
+
     // Panic if we can't read configuration
     let configuration = get_configuration().expect("Failed to read configurations.");
 
@@ -15,10 +21,9 @@ async fn main() -> Result<(), std::io::Error> {
     // .expect("Failed to connect to Postgres");
 
     //? connection pool
-    let connection_pool = PgPool::connect(
-        &configuration.database.connection_string()
-    ).await
-    .expect("Failed to connect to Postgres");
+    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+        .await
+        .expect("Failed to connect to Postgres");
 
     let address = format!("127.0.0.1:{}", configuration.application_port);
 
