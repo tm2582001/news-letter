@@ -4,6 +4,8 @@ use news_letter::telemetry::{get_subscriber, init_subscriber};
 use sqlx::PgPool;
 use std::net::TcpListener;
 
+use secrecy::ExposeSecret;
+
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -21,7 +23,7 @@ async fn main() -> Result<(), std::io::Error> {
     // .expect("Failed to connect to Postgres");
 
     //? connection pool
-    let connection_pool = PgPool::connect(&configuration.database.connection_string())
+    let connection_pool = PgPool::connect(&configuration.database.connection_string().expose_secret())
         .await
         .expect("Failed to connect to Postgres");
 
