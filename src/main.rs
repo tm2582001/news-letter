@@ -6,10 +6,8 @@ use std::net::TcpListener;
 
 use secrecy::ExposeSecret;
 
-
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-
     let subscriber = get_subscriber("news-letter".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 
@@ -23,9 +21,10 @@ async fn main() -> Result<(), std::io::Error> {
     // .expect("Failed to connect to Postgres");
 
     //? connection pool
-    let connection_pool = PgPool::connect(&configuration.database.connection_string().expose_secret())
-        .await
-        .expect("Failed to connect to Postgres");
+    let connection_pool =
+        PgPool::connect(&configuration.database.connection_string().expose_secret())
+            .await
+            .expect("Failed to connect to Postgres");
 
     let address = format!("127.0.0.1:{}", configuration.application_port);
 
