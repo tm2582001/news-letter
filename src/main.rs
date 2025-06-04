@@ -1,10 +1,8 @@
 use news_letter::configuration::get_configuration;
 use news_letter::startup::run;
 use news_letter::telemetry::{get_subscriber, init_subscriber};
-use sqlx::PgPool;
+use sqlx::postgres::PgPoolOptions;
 use std::net::TcpListener;
-
-use secrecy::ExposeSecret;
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
@@ -22,8 +20,9 @@ async fn main() -> Result<(), std::io::Error> {
 
     //? connection pool
     let connection_pool =
-        PgPool::connect_lazy(configuration.database.connection_string().expose_secret())
-            .expect("Failed to connect to Postgres");
+        PgPoolOptions::new()
+        .acquire_timeout(std::time::Duration::from_secs(2))
+        .connect_lazy_with(configuration.database.with_db());
 
     let address = format!("{}:{}",configuration.application.host, configuration.application.port);
 
