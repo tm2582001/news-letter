@@ -42,6 +42,12 @@ secrecy = {version = "0.10", features = ["serde"]}
 tracing-actix-web = "0.7" #book writer is author of this library
 serde-aux="4"
 unicode-segmentation="1"
+validator="0.20"
 
 [dev-dependencies]
 claims = "0.8"
+fake="4.3"
+quickcheck ="1"
+quickcheck_macros="1"
+rand="0.9"
+
