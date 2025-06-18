@@ -1,6 +1,7 @@
 use actix_web::{web, HttpResponse};
 use chrono::Utc;
 use sqlx::PgPool;
+use tracing::subscriber;
 use uuid::Uuid;
 
 use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
@@ -9,6 +10,22 @@ use crate::domain::{NewSubscriber, SubscriberEmail, SubscriberName};
 pub struct FormData {
     email: String,
     name: String,
+}
+
+// ? we can use this function or the try_from implementation
+// pub fn parse_subscriber(form: FormData) -> Result<NewSubscriber, String>{
+//     let name = SubscriberName::parse(form.name)?;
+//     let email = SubscriberEmail::parse(form.email)?;
+//     Ok(NewSubscriber {email,name})
+// }
+
+impl TryFrom<FormData> for NewSubscriber {
+    type Error = String;
+    fn try_from(value: FormData) -> Result<Self, Self::Error> {
+        let name = SubscriberName::parse(value.name)?;
+        let email = SubscriberEmail::parse(value.email)?;
+        Ok(Self { email, name })
+    }
 }
 
 #[tracing::instrument(
@@ -20,21 +37,13 @@ pub struct FormData {
     )
 )]
 pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> HttpResponse {
-    
-     // `web::Form` is a wrapper around `FormData`
-     // `form.0` gives us access to the underlying `FormData`
+    // `web::Form` is a wrapper around `FormData`
+    // `form.0` gives us access to the underlying `FormData`
 
-    let name = match SubscriberName::parse(form.0.name) {
-        Ok(name)=>name,
-        Err(_) => return HttpResponse::BadRequest().finish()
+    let new_subscriber = match form.0.try_into() {
+        Ok(subscriber) => subscriber,
+        Err(_) => return HttpResponse::BadRequest().finish(),
     };
-
-    let email = match SubscriberEmail::parse(form.0.email) {
-        Ok(email)=> email,
-        Err(_)=> return HttpResponse::BadRequest().finish()
-    };
-
-    let new_subscriber = NewSubscriber {email,name};
 
     match insert_subscriber(&pool, &new_subscriber).await {
         Ok(_) => HttpResponse::Ok().finish(),
@@ -47,7 +56,10 @@ pub async fn subscribe(form: web::Form<FormData>, pool: web::Data<PgPool>) -> Ht
     skip(new_subscriber, pool)
 )]
 
-pub async fn insert_subscriber(pool: &PgPool, new_subscriber: &NewSubscriber) -> Result<(), sqlx::Error> {
+pub async fn insert_subscriber(
+    pool: &PgPool,
+    new_subscriber: &NewSubscriber,
+) -> Result<(), sqlx::Error> {
     sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at)
