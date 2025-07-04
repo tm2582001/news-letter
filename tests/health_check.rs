@@ -13,6 +13,7 @@ use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::{net::TcpListener, sync::LazyLock};
 use uuid::Uuid;
 
+use news_letter::email_clients::EmailClient;
 use news_letter::startup::run;
 
 pub struct TestApp {
@@ -52,10 +53,9 @@ async fn dummy_test() {
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
     // Create database
-    let mut connection =
-        PgConnection::connect_with(&config.without_db())
-            .await
-            .expect("Failed to connect to postgres");
+    let mut connection = PgConnection::connect_with(&config.without_db())
+        .await
+        .expect("Failed to connect to postgres");
 
     connection
         .execute(format!(r#"CREATE DATABASE "{}";"#, config.database_name).as_str())
@@ -89,7 +89,14 @@ async fn spawn_app() -> TestApp {
 
     let connection_pool = configure_database(&configuration.database).await;
 
-    let server = run(listener, connection_pool.clone()).expect("failed to bind address");
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address");
+    let email_client = EmailClient::new(configuration.email_client.base_url, sender_email);
+
+    let server =
+        run(listener, connection_pool.clone(), email_client).expect("failed to bind address");
     // Launch the server as the background tasl
     // tokio::spawn returns a handle to the spawned future,
     // but we have no use for it here, hence no binding
@@ -164,8 +171,6 @@ async fn subscribe_returns_a_400_when_data_is_missing() {
         )
     }
 }
-
-
 
 #[tokio::test]
 async fn subscribe_returns_a_400_when_fields_are_present_but_invalid() {
