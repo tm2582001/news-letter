@@ -57,4 +57,5 @@ fake="4.3"
 quickcheck ="1"
 quickcheck_macros="1"
 rand="0.9"
+wiremock = "0.6"
 

@@ -1,5 +1,5 @@
 use news_letter::configuration::get_configuration;
-use news_letter::email_clients::{self, EmailClient};
+use news_letter::email_clients::EmailClient;
 use news_letter::startup::run;
 use news_letter::telemetry::{get_subscriber, init_subscriber};
 use sqlx::postgres::PgPoolOptions;
@@ -20,16 +20,24 @@ async fn main() -> Result<(), std::io::Error> {
     // .expect("Failed to connect to Postgres");
 
     //? connection pool
-    let connection_pool =
-        PgPoolOptions::new()
+    let connection_pool = PgPoolOptions::new()
         .acquire_timeout(std::time::Duration::from_secs(2))
         .connect_lazy_with(configuration.database.with_db());
 
-    let sender_email = configuration.email_client.sender().expect("Invalid sender email address");
-    let email_client = EmailClient::new(configuration.email_client.base_url, sender_email);
+    let sender_email = configuration
+        .email_client
+        .sender()
+        .expect("Invalid sender email address");
+    let email_client = EmailClient::new(
+        configuration.email_client.base_url,
+        sender_email,
+        configuration.email_client.authorization_token,
+    );
 
-
-    let address = format!("{}:{}",configuration.application.host, configuration.application.port);
+    let address = format!(
+        "{}:{}",
+        configuration.application.host, configuration.application.port
+    );
 
     let listener = TcpListener::bind(address)?;
     run(listener, connection_pool, email_client)?.await
