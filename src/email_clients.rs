@@ -15,11 +15,9 @@ impl EmailClient {
         base_url: String,
         sender: SubscriberEmail,
         authorization_token: SecretBox<String>,
+        timeout: std::time::Duration,
     ) -> Self {
-        let http_client = Client::builder()
-            .timeout(std::time::Duration::from_secs(10))
-            .build()
-            .unwrap();
+        let http_client = Client::builder().timeout(timeout).build().unwrap();
         Self {
             http_client,
             base_url,
@@ -118,7 +116,12 @@ mod test {
 
     /// Get test instance of `EmailClient`.
     fn email_client(base_url: String) -> EmailClient {
-        EmailClient::new(base_url, email(), SecretBox::new(Faker.fake()))
+        EmailClient::new(
+            base_url,
+            email(),
+            SecretBox::new(Faker.fake()),
+            std::time::Duration::from_millis(200),
+        )
     }
 
     #[tokio::test]
