@@ -7,14 +7,14 @@ pub struct EmailClient {
     http_client: Client,
     base_url: String,
     sender: SubscriberEmail,
-    authorization_token: SecretBox<String>,
+    authorization_token: SecretBox<str>,
 }
 
 impl EmailClient {
     pub fn new(
         base_url: String,
         sender: SubscriberEmail,
-        authorization_token: SecretBox<String>,
+        authorization_token: SecretBox<str>,
         timeout: std::time::Duration,
     ) -> Self {
         let http_client = Client::builder().timeout(timeout).build().unwrap();
@@ -116,10 +116,11 @@ mod test {
 
     /// Get test instance of `EmailClient`.
     fn email_client(base_url: String) -> EmailClient {
+        let fake_auth_token: String = Faker.fake();
         EmailClient::new(
             base_url,
             email(),
-            SecretBox::new(Faker.fake()),
+            SecretBox::new(fake_auth_token.into()), // can also use fake_auth_token.into_boxed_str()
             std::time::Duration::from_millis(200),
         )
     }
