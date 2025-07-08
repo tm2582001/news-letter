@@ -8,6 +8,8 @@ use crate::{
     email_clients::EmailClient,
 };
 
+use crate::startup::ApplicationBaseUrl;
+
 #[derive(serde::Deserialize)]
 pub struct FormData {
     email: String,
@@ -32,7 +34,7 @@ impl TryFrom<FormData> for NewSubscriber {
 
 #[tracing::instrument(
     name="Adding a new subscriber",
-    skip(form, pool, email_client),
+    skip(form, pool, email_client,base_url),
     fields(
         subscriber_email = %form.email,
         subscriber_name = %form.name
@@ -42,6 +44,7 @@ pub async fn subscribe(
     form: web::Form<FormData>,
     pool: web::Data<PgPool>,
     email_client: web::Data<EmailClient>,
+    base_url: web::Data<ApplicationBaseUrl>
 ) -> HttpResponse {
     // `web::Form` is a wrapper around `FormData`
     // `form.0` gives us access to the underlying `FormData`
@@ -55,13 +58,7 @@ pub async fn subscribe(
         return HttpResponse::InternalServerError().finish();
     }
 
-    if email_client
-        .send_email(
-            new_subscriber.email,
-            "Welcome!",
-            "Welcome to our news letter!",
-            "Welcome to our news letter!",
-        )
+    if send_confirmation_email(&email_client, new_subscriber, &base_url.0)
         .await
         .is_err()
     {
@@ -69,6 +66,34 @@ pub async fn subscribe(
     }
 
     HttpResponse::Ok().finish()
+}
+
+#[tracing::instrument(
+    name = "Send a confirmation email to a new subscriber",
+    skip(email_client, new_subscriber, base_url)
+)]
+pub async fn send_confirmation_email(
+    email_client: &EmailClient,
+    new_subscriber: NewSubscriber,
+    base_url: &str
+) -> Result<(), reqwest::Error> {
+    let confirmation_link = format!("{}/subscriptions/confirm?subscription_token=mytoken", base_url);
+
+    email_client
+        .send_email(
+            new_subscriber.email,
+            "Welcome!",
+            &format!(
+                "Welcome to our news letter!<br />\
+            Click <a href=\"{}\">here</a> to confirm your subscription.",
+                confirmation_link
+            ),
+            &format!(
+                "Welcome to our news letter!\nVisit {} to confirm your subscription.",
+                confirmation_link
+            ),
+        )
+        .await
 }
 
 #[tracing::instrument(
@@ -83,7 +108,7 @@ pub async fn insert_subscriber(
     sqlx::query!(
         r#"
         INSERT INTO subscriptions (id, email, name, subscribed_at, status)
-        VALUES ($1, $2, $3, $4, 'confirmed')
+        VALUES ($1, $2, $3, $4, 'pending_confirmation')
         "#,
         Uuid::new_v4(),
         new_subscriber.email.as_ref(),

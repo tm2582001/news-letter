@@ -28,7 +28,8 @@ static TRACING: LazyLock<()> = LazyLock::new(|| {
 pub struct TestApp {
     pub address: String,
     pub db_pool: PgPool,
-    pub email_server: MockServer
+    pub email_server: MockServer,
+    pub port: u16
 }
 
 impl TestApp {
@@ -58,20 +59,35 @@ pub async fn spawn_app() -> TestApp {
     configure_database(&configuration.database).await;
 
     let application = Application::build(configuration.clone()).await.expect("Failed to build application");
+    let application_port = application.port();
 
-    let address = format!("http://127.0.0.1:{}", application.port());
+
      // Launch the server as the background tasl
     // tokio::spawn returns a handle to the spawned future,
     // but we have no use for it here, hence no binding
     let _ = tokio::spawn(application.run_until_stopped());
     TestApp {
-        address,
+        address: format!("http://localhost:{}", application_port),
+        port: application_port,
         db_pool: get_connection_pool(&configuration.database),
         email_server
     }   
 }
 
 pub async fn configure_database(config: &DatabaseSettings) -> PgPool {
+
+    //* here for refrence
+    // let configuration = get_configuration().expect("Failed to read configuration");
+    // let connection_string = configuration.database.connection_string();
+    // // The `Connection` trait MUST be in scope for us to invoke
+    // // `PgConnection::connect` - it is not an inherent method of the struct!
+    // println!("{}",connection_string);
+
+    // let mut connection = PgConnection::connect(&connection_string)
+    // .await
+    // .expect("Failed to connect to Postgres.");
+
+
     // Create database
     let mut connection = PgConnection::connect_with(&config.without_db())
         .await
