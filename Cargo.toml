@@ -43,6 +43,7 @@ serde-aux="4"
 unicode-segmentation="1"
 validator="0.20"
 rand={version = "0.9", features = ["std_rng"]}
+thiserror="2"
 
 
 
