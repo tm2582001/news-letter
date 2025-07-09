@@ -1,5 +1,4 @@
 use crate::helpers::spawn_app;
-use sqlx::query;
 use wiremock::matchers::{method, path};
 use wiremock::{Mock, ResponseTemplate};
 
