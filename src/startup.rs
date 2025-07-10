@@ -7,7 +7,7 @@ use tracing_actix_web::TracingLogger;
 
 use crate::configuration::{DatabaseSettings, Settings};
 use crate::email_clients::EmailClient;
-use crate::routes::{health_check, subscribe, confirm};
+use crate::routes::{confirm, health_check, publish_newsletter, subscribe};
 
 pub struct Application {
     port: u16,
@@ -86,6 +86,7 @@ pub fn run(
             // Middlewares are added using the `wrap` methon on `App`
             .wrap(TracingLogger::default())
             .route("/health_check", web::get().to(health_check))
+            .route("/newsletters", web::post().to(publish_newsletter))
             .route("/subscriptions", web::post().to(subscribe))
             .route("/subscriptions/confirm", web::get().to(confirm))
             .app_data(db_pool.clone())
