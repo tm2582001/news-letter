@@ -7,11 +7,13 @@
 use news_letter::configuration::{get_configuration, DatabaseSettings};
 use news_letter::startup::{get_connection_pool, Application};
 use news_letter::telemetry::{get_subscriber, init_subscriber};
-use sha3::Digest;
 use sqlx::{Connection, Executor, PgConnection, PgPool};
 use std::sync::LazyLock;
 use uuid::Uuid;
 use wiremock::MockServer;
+use argon2::password_hash::SaltString;
+use argon2::{Argon2, PasswordHasher};
+
 
 // book uses Lazy from once_lock here but it is giving error now so we Can use lazy_static here I think else LazyLock which is build in
 static TRACING: LazyLock<()> = LazyLock::new(|| {
@@ -101,8 +103,13 @@ impl TestUser {
     }
 
     async fn store(&self, pool: &PgPool) {
-        let password_hash = sha3::Sha3_256::digest(self.password.as_bytes());
-        let password_hash = format!("{:x}", password_hash);
+        // using rand version 8 because 9 uses rand_core v9.3 where as argon use version 6.4 which was causing conflict
+        let salt = SaltString::generate(&mut rand8::thread_rng());
+
+        let password_hash = Argon2::default()
+            .hash_password(self.password.as_bytes(), &salt)
+            .unwrap()
+            .to_string();
 
         sqlx::query!(
             "INSERT INTO users (user_id, username, password_hash) VALUES ($1,$2, $3)",
