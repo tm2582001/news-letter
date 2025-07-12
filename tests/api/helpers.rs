@@ -12,7 +12,7 @@ use std::sync::LazyLock;
 use uuid::Uuid;
 use wiremock::MockServer;
 use argon2::password_hash::SaltString;
-use argon2::{Argon2, PasswordHasher};
+use argon2::{Algorithm, Argon2, Params, PasswordHasher, Version};
 
 
 // book uses Lazy from once_lock here but it is giving error now so we Can use lazy_static here I think else LazyLock which is build in
@@ -38,7 +38,7 @@ pub struct TestApp {
     pub db_pool: PgPool,
     pub email_server: MockServer,
     pub port: u16,
-    test_user: TestUser,
+    pub test_user: TestUser,
 }
 
 impl TestApp {
@@ -106,7 +106,12 @@ impl TestUser {
         // using rand version 8 because 9 uses rand_core v9.3 where as argon use version 6.4 which was causing conflict
         let salt = SaltString::generate(&mut rand8::thread_rng());
 
-        let password_hash = Argon2::default()
+        // Match the parameters of the default  password
+        let password_hash = Argon2::new(
+            Algorithm::Argon2id,
+            Version::V0x13,
+            Params::new(15000, 2, 1, None).unwrap()
+        )
             .hash_password(self.password.as_bytes(), &salt)
             .unwrap()
             .to_string();
