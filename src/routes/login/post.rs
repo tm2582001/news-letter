@@ -2,7 +2,7 @@ use actix_web::http::header::LOCATION;
 use actix_web::http::StatusCode;
 use actix_web::{web, HttpResponse, ResponseError};
 use actix_web::error::InternalError;
-use actix_web::cookie::Cookie;
+use actix_web_flash_messages::FlashMessage;
 use secrecy::SecretBox;
 use sqlx::PgPool;
 
@@ -44,9 +44,11 @@ pub async fn login(
                 AuthError::UnexpectedError(_) => LoginError::UnexpectedError(e.into()),
             };
 
+            FlashMessage::error(e.to_string()).send();
+
             let response =HttpResponse::SeeOther()
                 .insert_header((LOCATION, format!("/login")))
-                .cookie(Cookie::new("_flash", e.to_string()))
+                // .cookie(Cookie::new("_flash", e.to_string()))
                 .finish();
 
             Err(InternalError::from_response(e, response))
