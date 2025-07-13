@@ -3,7 +3,7 @@ use actix_web::http::{header, StatusCode};
 use actix_web::{web, HttpRequest, HttpResponse, ResponseError};
 use anyhow::Context;
 use base64::Engine;
-use secrecy::{SecretString};
+use secrecy::{SecretBox};
 use sqlx::PgPool;
 
 use crate::authentication::{validate_credentials, AuthError, Credentials};
@@ -156,7 +156,7 @@ fn basic_authentication(headers: &HeaderMap) -> Result<Credentials, anyhow::Erro
 
     Ok(Credentials {
         username,
-        password: SecretString::new(password.into()),
+        password: SecretBox::new(password.into()),
     })
 }
 

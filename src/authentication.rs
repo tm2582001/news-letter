@@ -1,6 +1,6 @@
 use anyhow::Context;
 use argon2::{Argon2, PasswordHash, PasswordVerifier};
-use secrecy::{ExposeSecret, SecretString};
+use secrecy::{ExposeSecret, SecretBox};
 use sqlx::PgPool;
 
 use crate::telemetry::spawn_blocking_with_tracing;
@@ -15,7 +15,7 @@ pub enum AuthError {
 
 pub struct Credentials {
     pub username: String,
-    pub password: SecretString,
+    pub password: SecretBox<str>,
 }
 
 #[tracing::instrument(name = "Validate credentials", skip(credentials, pool))]
@@ -24,7 +24,7 @@ pub async fn validate_credentials(
     pool: &PgPool,
 ) -> Result<uuid::Uuid, AuthError> {
     let mut user_id = None;
-    let mut expected_password_hash = SecretString::new(
+    let mut expected_password_hash = SecretBox::new(
         "$argon2id$v=19$m=15000,t=2,p=1$\
         gZiV/M1gPc22ElAH/Jh1Hw$\
         CWOrkoo7oJBQ/iyh7uJ0LO2aLEfrHwTWllSAxT0zRno"
@@ -55,8 +55,8 @@ pub async fn validate_credentials(
     skip(expected_password_hash, password_candidate)
 )]
 fn verify_password_hash(
-    expected_password_hash: SecretString,
-    password_candidate: SecretString,
+    expected_password_hash: SecretBox<str>,
+    password_candidate: SecretBox<str>,
 ) -> Result<(), AuthError> {
     let expected_password_hash = PasswordHash::new(expected_password_hash.expose_secret())
         .context("Failed to parse hash in PHC string format.")?;
@@ -74,7 +74,7 @@ fn verify_password_hash(
 pub async fn get_stored_credentials(
     username: &str,
     pool: &PgPool,
-) -> Result<Option<(uuid::Uuid, SecretString)>, anyhow::Error> {
+) -> Result<Option<(uuid::Uuid, SecretBox<str>)>, anyhow::Error> {
     let row = sqlx::query!(
         r#"SELECT user_id, password_hash FROM users WHERE username = $1"#,
         username
@@ -82,7 +82,7 @@ pub async fn get_stored_credentials(
     .fetch_optional(pool)
     .await
     .context("Failed to perform a query to validate auth credentials.")?
-    .map(|row| (row.user_id, SecretString::new(row.password_hash.into())));
+    .map(|row| (row.user_id, SecretBox::new(row.password_hash.into())));
 
     Ok(row)
 }

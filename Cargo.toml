@@ -48,6 +48,11 @@ anyhow="1"
 base64="0.22"
 # Read this to know more https://cheatsheetseries.owasp.org/cheatsheets/Password_Storage_Cheat_Sheet.html
 argon2 = {version = "0.5", features = ["std"]}
+urlencoding="2"
+htmlescape = "0.3"
+hmac = {version = "0.12", features = ["std"]}
+sha2= "0.10"
+hex="0.4"
 
 
 [dependencies.reqwest]
