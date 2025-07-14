@@ -50,3 +50,12 @@ async fn redirect_to_admin_dashboard_after_login_success(){
     let html_page = app.get_admin_dhasboard_html().await;
     assert!(html_page.contains(&format!("Welcome {}", app.test_user.username)));
 }
+
+#[tokio::test]
+async fn you_must_be_logged_in_to_access_the_admin_dashboard(){
+    let app = spawn_app().await;
+
+    let response = app.get_admin_dhasboard().await;
+
+    assert_is_redirected_to(&response, "/login");
+}

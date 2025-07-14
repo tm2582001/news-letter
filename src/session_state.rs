@@ -36,7 +36,7 @@ impl FromRequest for TypedSession {
     // resolves to the wrapped value first time it's polled by the executor
     type Future = Ready<Result<TypedSession, Self::Error>>;
 
-    fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
+    fn from_request(req: &HttpRequest, _payload: &mut Payload) -> Self::Future {
         ready(Ok(TypedSession(req.get_session())))
     }
 }

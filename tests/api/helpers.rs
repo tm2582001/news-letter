@@ -109,15 +109,16 @@ impl TestApp {
             .unwrap()
     }
 
-    pub async fn get_admin_dhasboard_html(&self) ->String {
+    pub async fn get_admin_dhasboard_html(&self) -> String {
+        self.get_admin_dhasboard().await.text().await.unwrap()
+    }
+
+    pub async fn get_admin_dhasboard(&self) -> reqwest::Response {
         self.api_client
             .get(&format!("{}/admin/dashboard", &self.address))
             .send()
             .await
             .expect("Failed to execute request")
-            .text()
-            .await
-            .unwrap()
     }
 }
 
