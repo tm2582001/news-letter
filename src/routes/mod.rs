@@ -13,4 +13,3 @@ pub use login::*;
 pub use newsletters::*;
 pub use subscriptions::*;
 pub use subscriptions_confirm::*;
-

@@ -1,19 +1,11 @@
-use actix_web::{ web, HttpResponse};
 use actix_web::http::header::{ContentType, LOCATION};
+use actix_web::{web, HttpResponse};
 use anyhow::Context;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-
 use crate::session_state::TypedSession;
-
-// Return an opaque 500 while preserving the error's root cause for logging.
-fn e500<T>(e: T) -> actix_web::Error
-where
-    T: std::fmt::Debug + std::fmt::Display + 'static,
-{
-    actix_web::error::ErrorInternalServerError(e)
-}
+use crate::utils::e500;
 
 pub async fn admin_dashboard(
     session: TypedSession,
@@ -40,13 +32,17 @@ pub async fn admin_dashboard(
 </head>
 <body>
     <p>Welcome {username}!</p>
+    <p>Available actions:</p>
+    <ol>
+        <li><a href="/admin/password">Change password</a></li>
+    </ol>
 </body>
 </html>"#
         )))
 }
 
 #[tracing::instrument(name = "Get username", skip(pool))]
-async fn get_username(user_id: Uuid, pool: &PgPool) -> Result<String, anyhow::Error> {
+pub async fn get_username(user_id: Uuid, pool: &PgPool) -> Result<String, anyhow::Error> {
     let row = sqlx::query!(r#"SELECT username FROM users WHERE user_id = $1"#, user_id)
         .fetch_one(pool)
         .await
