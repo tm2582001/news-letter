@@ -108,6 +108,17 @@ impl TestApp {
             .await
             .unwrap()
     }
+
+    pub async fn get_admin_dhasboard_html(&self) ->String {
+        self.api_client
+            .get(&format!("{}/admin/dashboard", &self.address))
+            .send()
+            .await
+            .expect("Failed to execute request")
+            .text()
+            .await
+            .unwrap()
+    }
 }
 
 pub fn assert_is_redirected_to(response: &reqwest::Response, location: &str) {

@@ -3,7 +3,7 @@ use news_letter::startup::Application;
 use news_letter::telemetry::{get_subscriber, init_subscriber};
 
 #[tokio::main]
-async fn main() -> Result<(), std::io::Error> {
+async fn main() -> anyhow::Result<()> {
     let subscriber = get_subscriber("news-letter".into(), "info".into(), std::io::stdout);
     init_subscriber(subscriber);
 

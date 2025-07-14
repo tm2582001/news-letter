@@ -29,7 +29,7 @@ sqlx = { version = "0.8", default-features = false, features = [
     "chrono",
     "migrate",
 ] }
-uuid = { version = "1", features = ["v4"] }
+uuid = { version = "1", features = ["v4", "serde"] }
 chrono = { version = "0.4", default-features = false, features = ["clock"] }
 config = "0.15"
 tracing ={ version = "0.1", features = ["log"]}
@@ -50,10 +50,13 @@ base64="0.22"
 argon2 = {version = "0.5", features = ["std"]}
 urlencoding="2"
 htmlescape = "0.3"
-# hmac = {version = "0.12", features = ["std"]}
+hmac = {version = "0.12", features = ["std"]}
 # sha2= "0.10"
 # hex="0.4"
-actix-web-flash-messages= {version = "0.5", features = ["cookies"]}  # book writer is the auther of this library
+actix-web-flash-messages= {version = "0.5", features = ["cookies"]}      # book writer is the auther of this library
+actix-session={version ="0.10", features = ["redis-session-rustls"]}
+serde_json="1"
+
 
 
 [dependencies.reqwest]
@@ -68,7 +71,6 @@ fake="4.3"
 quickcheck ="1"
 quickcheck_macros="1"
 wiremock = "0.6"
-serde_json="1"
 linkify="0.10"
 rand8 = { package = "rand", version = "0.8" }
 
