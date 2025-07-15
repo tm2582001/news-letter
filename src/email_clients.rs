@@ -44,6 +44,7 @@ impl EmailClient {
         };
         self.http_client
             .post(&url)
+            .bearer_auth(self.authorization_token.expose_secret())
             .header(
                 "X-Postmark-Server-Token",
                 self.authorization_token.expose_secret(),
@@ -131,6 +132,7 @@ mod test {
         let email_client = email_client(mock_server.uri());
 
         Mock::given(header_exists("X-Postmark-Server-Token"))
+            .and(header_exists("Authorization"))
             .and(header("Content-Type", "application/json"))
             .and(path("/email"))
             .and(method("POST"))
