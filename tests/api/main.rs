@@ -2,6 +2,7 @@
 // * https://azriel.im/will/2019/10/08/dev-time-optimization-part-1-1.9x-speedup-65-less-disk-usage/
 
 
+mod admin_dashboard;
 mod change_password;
 mod helpers;
 mod health_check;
