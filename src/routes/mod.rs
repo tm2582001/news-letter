@@ -10,6 +10,6 @@ pub use admin::*;
 pub use health_check::*;
 pub use home::*;
 pub use login::*;
-pub use newsletters::*;
+pub use newsletters::publish_newsletter as publish_newsletter_old;
 pub use subscriptions::*;
 pub use subscriptions_confirm::*;

@@ -3,6 +3,7 @@
 
 
 mod admin_dashboard;
+mod admin_newsletter;
 mod change_password;
 mod helpers;
 mod health_check;
