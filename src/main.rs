@@ -1,3 +1,9 @@
+// To learn more about http we can see this http implementation
+//  https://github.com/hyperium/http/blob/c28945c6c6f99379b674a1e961a743c7752f2346/src/header/name.rs#L981   <--implementation
+// https://github.com/hyperium/http/blob/c28945c6c6f99379b674a1e961a743c7752f2346/src/header/value.rs#L780   <--test
+
+
+
 use news_letter::configuration::get_configuration;
 use news_letter::startup::Application;
 use news_letter::telemetry::{get_subscriber, init_subscriber};
