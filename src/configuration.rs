@@ -4,30 +4,42 @@ use sqlx::postgres::PgConnectOptions;
 use sqlx::postgres::PgSslMode;
 
 use crate::domain::SubscriberEmail;
+use crate::email_clients::EmailClient;
 
 #[derive(serde::Deserialize, Clone)]
 pub struct Settings {
     pub database: DatabaseSettings,
     pub application: ApplicationSettings,
     pub email_client: EmailClientSettings,
-    pub redis_uri: SecretBox<str>
+    pub redis_uri: SecretBox<str>,
 }
 
 #[derive(serde::Deserialize, Clone)]
-pub struct EmailClientSettings{
+pub struct EmailClientSettings {
     pub base_url: String,
-    pub sender_email:String,
+    pub sender_email: String,
     pub authorization_token: SecretBox<str>,
-    pub timeout_milliseconds: u64
+    pub timeout_milliseconds: u64,
 }
 
 impl EmailClientSettings {
-    pub fn sender(&self) -> Result<SubscriberEmail, String>{
+    pub fn sender(&self) -> Result<SubscriberEmail, String> {
         SubscriberEmail::parse(self.sender_email.clone())
     }
 
     pub fn timeout(&self) -> std::time::Duration {
         std::time::Duration::from_millis(self.timeout_milliseconds)
+    }
+
+    pub fn client(self) -> EmailClient {
+        let sender_email = self.sender().expect("Invalid sender email address.");
+        let timeout = self.timeout();
+        EmailClient::new(
+            self.base_url,
+            sender_email,
+            self.authorization_token,
+            timeout,
+        )
     }
 }
 
@@ -37,7 +49,7 @@ pub struct ApplicationSettings {
     pub port: u16,
     pub host: String,
     pub base_url: String,
-    pub hmac_secret: SecretBox<str>
+    pub hmac_secret: SecretBox<str>,
 }
 
 #[derive(serde::Deserialize, Clone)]
@@ -57,7 +69,7 @@ impl DatabaseSettings {
 
         //    I think this no longer works
         // this also require this -> use sqlx::ConnectOptions;
-        
+
         //  let mut options = self.without_db().database(&self.database_name);
         //     options.log_statements(tracing::log::LevelFilter::Trace);
         //     options

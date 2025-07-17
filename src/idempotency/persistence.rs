@@ -97,6 +97,8 @@ pub enum NextAction {
     ReturnSavedResponse(HttpResponse),
 }
 
+
+// * learn more about tokio::sync::Mutex
 pub async fn try_processing(
     pool: &PgPool,
     idempotency_key: &IdempotencyKey,
